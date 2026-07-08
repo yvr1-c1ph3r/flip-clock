@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip Clock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #FF3B30;
+    --card-bg: #1a1a1a;
+    --digit-color: #ffffff;
+  }
+
+  @font-face {
+    font-family: 'FuturaFallback';
+    src: local('Futura'), local('Futura PT Bold'), local('Century Gothic');
+  }
+
+  body {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    transition: background 0.4s cubic-bezier(.4,0,.2,1);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Halftone dot overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(0,0,0,0.11) 1.5px, transparent 1.5px);
+    background-size: 18px 18px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .clock-wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 26px;
+  }
+
+  .clock-title {
+    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 9px;
+    color: rgba(0,0,0,0.3);
+    text-transform: uppercase;
+  }
+
+  .clock {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .unit-label {
+    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 5px;
+    color: rgba(0,0,0,0.3);
+    text-transform: uppercase;
+  }
+
+  .flip-group {
+    display: flex;
+    gap: 5px;
+  }
+
+  .flip-card {
+    position: relative;
+    width: 74px;
+    height: 102px;
+    perspective: 500px;
+    filter: drop-shadow(5px 5px 0px rgba(0,0,0,0.4));
+  }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    background: var(--card-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 84px;
+    color: var(--digit-color);
+    border-radius: 10px;
+    overflow: hidden;
+    user-select: none;
+    border: 3px solid #000;
+  }
+
+  .card-top {
+    height: 51px;
+    top: 0;
+    align-items: flex-end;
+    border-bottom: 2px solid #000;
+    border-radius: 10px 10px 0 0;
+  }
+  .card-top span { transform: translateY(51px); display: block; }
+
+  .card-bottom {
+    height: 51px;
+    bottom: 0;
+    align-items: flex-start;
+    border-radius: 0 0 10px 10px;
+  }
+  .card-bottom span { transform: translateY(-51px); display: block; }
+
+  .hinge {
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    height: 3px;
+    background: #000;
+    z-index: 10;
+    transform: translateY(-50%);
+  }
+
+  .flip-panel {
+    position: absolute;
+    width: 100%;
+    height: 51px;
+    transform-origin: bottom;
+    transform-style: preserve-3d;
+    z-index: 5;
+  }
+
+  .flip-panel .front,
+  .flip-panel .back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--card-bg);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
+    font-weight: 700;
+    font-size: 84px;
+    color: var(--digit-color);
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    backface-visibility: hidden;
+    border: 3px solid #000;
+    border-bottom: none;
+  }
+  .flip-panel .front span { transform: translateY(51px); display: block; }
+
+  .flip-panel .back {
+    transform: rotateX(180deg);
+    border-radius: 0 0 10px 10px;
+    align-items: flex-start;
+    border: 3px solid #000;
+    border-top: none;
+  }
+  .flip-panel .back span { transform: translateY(-51px); display: block; }
+
+  .flip-panel.flipping {
+    animation: flipDown 0.38s cubic-bezier(.4,0,.6,1) forwards;
+  }
+  @keyframes flipDown {
+    0%   { transform: rotateX(0deg); }
+    100% { transform: rotateX(-180deg); }
+  }
+
+  .separator {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 30px;
+  }
+  .dot {
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.45);
+    flex-shrink: 0;
+  }
+
+  /* Color picker pill */
+  .color-picker {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: rgba(0,0,0,0.15);
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 2.5px solid rgba(0,0,0,0.18);
+  }
+
+  .swatch {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid rgba(0,0,0,0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .swatch:hover { transform: scale(1.2); }
+  .swatch.active {
+    border-color: #fff;
+    box-shadow: 0 0 0 2.5px #000;
+    transform: scale(1.15);
+  }
+</style>
+</head>
+<body>
+
+<div class="clock-wrapper">
+  <div class="clock-title">TIME</div>
+
+  <div class="clock">
+    <div class="unit">
+      <div class="flip-group" id="hours"></div>
+      <div class="unit-label">Hour</div>
+    </div>
+    <div class="separator"><div class="dot"></div><div class="dot"></div></div>
+    <div class="unit">
+      <div class="flip-group" id="minutes"></div>
+      <div class="unit-label">Min</div>
+    </div>
+  </div>
+
+  <div class="color-picker" id="color-picker"></div>
+</div>
+
+<script>
+  const themes = [
+    { bg: '#C0504A', dark: false },  // Dusty Red
+    { bg: '#D4845A', dark: false },  // Muted Tangerine
+    { bg: '#C9A84C', dark: false },  // Dusty Yellow
+    { bg: '#5A9E72', dark: false },  // Sage Green
+    { bg: '#4A7EB5', dark: false },  // Muted Blue
+    { bg: '#8A6BAE', dark: false },  // Dusty Grape
+    { bg: '#C47A96', dark: false },  // Dusty Pink
+    { bg: '#8B6A52', dark: true  },  // Warm Brown
+    { bg: '#7A8490', dark: true  },  // Blue Grey
+    { bg: '#3A3A3C', dark: true  },  // Jet Black
+  ];
+
+  const picker = document.getElementById('color-picker');
+  themes.forEach((t, i) => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (i === 0 ? ' active' : '');
+    s.style.background = t.bg;
+    s.onclick = () => applyTheme(i, s);
+    picker.appendChild(s);
+  });
+
+  function applyTheme(i, el) {
+    const t = themes[i];
+    document.documentElement.style.setProperty('--bg', t.bg);
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+
+    const textAlpha = t.dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
+    const dotColor  = t.dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)';
+    const pillBg    = t.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.15)';
+    const pillBd    = t.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.18)';
+
+    document.querySelectorAll('.clock-title, .unit-label').forEach(e => e.style.color = textAlpha);
+    document.querySelectorAll('.dot').forEach(d => d.style.background = dotColor);
+    picker.style.background   = pillBg;
+    picker.style.borderColor  = pillBd;
+  }
+
+  function createFlipCard() {
+    const card = document.createElement('div');
+    card.className = 'flip-card';
+    card.innerHTML = `
+      <div class="card-face card-top"><span>0</span></div>
+      <div class="card-face card-bottom"><span>0</span></div>
+      <div class="hinge"></div>
+      <div class="flip-panel">
+        <div class="front"><span>0</span></div>
+        <div class="back"><span>0</span></div>
+      </div>`;
+    return card;
+  }
+
+  function buildGroup(id) {
+    const el = document.getElementById(id);
+    const c1 = createFlipCard(), c2 = createFlipCard();
+    el.appendChild(c1); el.appendChild(c2);
+    return [c1, c2];
+  }
+
+  const hourCards = buildGroup('hours');
+  const minCards  = buildGroup('minutes');
+  let prev = { h: -1, m: -1 };
+
+  function setDigit(card, newVal, oldVal) {
+    const topFace = card.querySelector('.card-top span');
+    const botFace = card.querySelector('.card-bottom span');
+    const panel   = card.querySelector('.flip-panel');
+    const front   = panel.querySelector('.front span');
+    const back    = panel.querySelector('.back span');
+
+    if (newVal === oldVal) {
+      topFace.textContent = newVal;
+      botFace.textContent = newVal;
+      return;
+    }
+
+    front.textContent   = oldVal;
+    back.textContent    = newVal;
+    topFace.textContent = newVal;
+    botFace.textContent = oldVal;
+
+    panel.classList.remove('flipping');
+    void panel.offsetWidth;
+    panel.classList.add('flipping');
+
+    panel.addEventListener('animationend', () => {
+      panel.classList.remove('flipping');
+      botFace.textContent = newVal;
+      front.textContent   = newVal;
+      back.textContent    = newVal;
+    }, { once: true });
+  }
+
+  function setTwoDigit(cards, value, oldValue) {
+    const n = String(value).padStart(2, '0');
+    const o = String(oldValue < 0 ? value : oldValue).padStart(2, '0');
+    setDigit(cards[0], n[0], o[0]);
+    setDigit(cards[1], n[1], o[1]);
+  }
+
+  function tick() {
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes();
+    setTwoDigit(hourCards, h, prev.h);
+    setTwoDigit(minCards,  m, prev.m);
+    prev = { h, m };
+  }
+
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
