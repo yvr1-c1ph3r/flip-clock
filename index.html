@@ -43,20 +43,25 @@
     z-index: 0;
   }
 
+  /* ── Scale everything off a single custom property ── */
+  /* Base design = 74px card width. We derive a scale factor from vmin.   */
+  /* All formerly-fixed sizes are expressed as calc(N / 74 * var(--s)).   */
+  :root { --s: min(17vw, 17vh, 74px); }   /* card width, clamps at 74px  */
+
   .clock-wrapper {
     position: relative;
     z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 26px;
+    gap: calc(var(--s) * 0.35);
   }
 
   .clock-title {
     font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
     font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 9px;
+    font-size: calc(var(--s) * 0.15);
+    letter-spacing: calc(var(--s) * 0.12);
     color: rgba(0,0,0,0.3);
     text-transform: uppercase;
   }
@@ -64,36 +69,36 @@
   .clock {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: calc(var(--s) * 0.19);
   }
 
   .unit {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: calc(var(--s) * 0.13);
   }
 
   .unit-label {
     font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
     font-weight: 700;
-    font-size: 9px;
-    letter-spacing: 5px;
+    font-size: calc(var(--s) * 0.12);
+    letter-spacing: calc(var(--s) * 0.07);
     color: rgba(0,0,0,0.3);
     text-transform: uppercase;
   }
 
   .flip-group {
     display: flex;
-    gap: 5px;
+    gap: calc(var(--s) * 0.07);
   }
 
   .flip-card {
     position: relative;
-    width: 74px;
-    height: 102px;
-    perspective: 500px;
-    filter: drop-shadow(5px 5px 0px rgba(0,0,0,0.4));
+    width: var(--s);
+    height: calc(var(--s) * 1.378);   /* 102/74 */
+    perspective: calc(var(--s) * 6.76);
+    filter: drop-shadow(calc(var(--s)*0.068) calc(var(--s)*0.068) 0px rgba(0,0,0,0.4));
   }
 
   .card-face {
@@ -105,36 +110,36 @@
     justify-content: center;
     font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
     font-weight: 700;
-    font-size: 84px;
+    font-size: calc(var(--s) * 1.135);  /* 84/74 */
     color: var(--digit-color);
-    border-radius: 10px;
+    border-radius: calc(var(--s) * 0.135);
     overflow: hidden;
     user-select: none;
-    border: 3px solid #000;
+    border: calc(var(--s) * 0.04) solid #000;
   }
 
   .card-top {
-    height: 51px;
+    height: calc(var(--s) * 0.689);   /* 51/74 */
     top: 0;
     align-items: flex-end;
-    border-bottom: 2px solid #000;
-    border-radius: 10px 10px 0 0;
+    border-bottom: calc(var(--s) * 0.027) solid #000;
+    border-radius: calc(var(--s) * 0.135) calc(var(--s) * 0.135) 0 0;
   }
-  .card-top span { transform: translateY(51px); display: block; }
+  .card-top span { transform: translateY(calc(var(--s) * 0.689)); display: block; }
 
   .card-bottom {
-    height: 51px;
+    height: calc(var(--s) * 0.689);
     bottom: 0;
     align-items: flex-start;
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 calc(var(--s) * 0.135) calc(var(--s) * 0.135);
   }
-  .card-bottom span { transform: translateY(-51px); display: block; }
+  .card-bottom span { transform: translateY(calc(var(--s) * -0.689)); display: block; }
 
   .hinge {
     position: absolute;
     top: 50%;
     left: 0; right: 0;
-    height: 3px;
+    height: calc(var(--s) * 0.04);
     background: #000;
     z-index: 10;
     transform: translateY(-50%);
@@ -143,7 +148,7 @@
   .flip-panel {
     position: absolute;
     width: 100%;
-    height: 51px;
+    height: calc(var(--s) * 0.689);
     transform-origin: bottom;
     transform-style: preserve-3d;
     z-index: 5;
@@ -160,24 +165,24 @@
     justify-content: center;
     font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
     font-weight: 700;
-    font-size: 84px;
+    font-size: calc(var(--s) * 1.135);
     color: var(--digit-color);
-    border-radius: 10px 10px 0 0;
+    border-radius: calc(var(--s) * 0.135) calc(var(--s) * 0.135) 0 0;
     overflow: hidden;
     backface-visibility: hidden;
-    border: 3px solid #000;
+    border: calc(var(--s) * 0.04) solid #000;
     border-bottom: none;
   }
-  .flip-panel .front span { transform: translateY(51px); display: block; }
+  .flip-panel .front span { transform: translateY(calc(var(--s) * 0.689)); display: block; }
 
   .flip-panel .back {
     transform: rotateX(180deg);
-    border-radius: 0 0 10px 10px;
+    border-radius: 0 0 calc(var(--s) * 0.135) calc(var(--s) * 0.135);
     align-items: flex-start;
-    border: 3px solid #000;
+    border: calc(var(--s) * 0.04) solid #000;
     border-top: none;
   }
-  .flip-panel .back span { transform: translateY(-51px); display: block; }
+  .flip-panel .back span { transform: translateY(calc(var(--s) * -0.689)); display: block; }
 
   .flip-panel.flipping {
     animation: flipDown 0.38s cubic-bezier(.4,0,.6,1) forwards;
@@ -190,11 +195,12 @@
   .separator {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding-bottom: 30px;
+    gap: calc(var(--s) * 0.216);
+    padding-bottom: calc(var(--s) * 0.405);
   }
   .dot {
-    width: 11px; height: 11px;
+    width: calc(var(--s) * 0.149);
+    height: calc(var(--s) * 0.149);
     border-radius: 50%;
     background: rgba(0,0,0,0.45);
     flex-shrink: 0;
@@ -203,25 +209,29 @@
   /* Color picker pill */
   .color-picker {
     display: flex;
-    gap: 10px;
+    gap: calc(var(--s) * 0.135);
     align-items: center;
     background: rgba(0,0,0,0.15);
-    padding: 8px 16px;
+    padding: calc(var(--s) * 0.108) calc(var(--s) * 0.216);
     border-radius: 999px;
-    border: 2.5px solid rgba(0,0,0,0.18);
+    border: calc(var(--s) * 0.034) solid rgba(0,0,0,0.18);
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 90vw;
   }
 
   .swatch {
-    width: 22px; height: 22px;
+    width: calc(var(--s) * 0.297);
+    height: calc(var(--s) * 0.297);
     border-radius: 50%;
     cursor: pointer;
-    border: 3px solid rgba(0,0,0,0.2);
+    border: calc(var(--s) * 0.04) solid rgba(0,0,0,0.2);
     transition: transform 0.15s, box-shadow 0.15s;
   }
   .swatch:hover { transform: scale(1.2); }
   .swatch.active {
     border-color: #fff;
-    box-shadow: 0 0 0 2.5px #000;
+    box-shadow: 0 0 0 calc(var(--s) * 0.034) #000;
     transform: scale(1.15);
   }
 </style>
