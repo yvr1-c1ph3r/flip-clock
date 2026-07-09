@@ -204,6 +204,14 @@
     border-radius: 50%;
     background: rgba(0,0,0,0.45);
     flex-shrink: 0;
+    transition: opacity 0.1s ease;
+  }
+  .dot.off { animation: blink-off 1s forwards; }
+  @keyframes blink-off {
+    0%   { opacity: 0.1; }
+    35%  { opacity: 0.1; }
+    36%  { opacity: 1; }
+    100% { opacity: 1; }
   }
 
   /* Color picker pill */
@@ -358,12 +366,15 @@
     setDigit(cards[1], n[1], o[1]);
   }
 
+  const dots = document.querySelectorAll('.dot');
+
   function tick() {
     const now = new Date();
-    const h = now.getHours(), m = now.getMinutes();
+    const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
     setTwoDigit(hourCards, h, prev.h);
     setTwoDigit(minCards,  m, prev.m);
     prev = { h, m };
+    dots.forEach(d => d.classList.toggle('off', s % 2 === 1));
   }
 
   tick();
