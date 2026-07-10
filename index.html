@@ -326,33 +326,27 @@
     const flapTop   = card.querySelector('.flap-top');
     const flapBot   = card.querySelector('.flap-bot');
 
-    // Always keep static layers up to date
-    setText(staticTop, newVal);
-    setText(staticBot, newVal);
-
-    if (newVal === oldVal) return;
-
-    // flap-top: shows old value, rotates away revealing new static-top underneath
+    if (newVal === oldVal) {
+      setText(staticTop,newVal);setText(staticBot,newVal);return;
+    }
+    setText(staticTop, oldVal);
+    setText(staticBot, oldVal);
     setText(flapTop, oldVal);
     setText(flapBot, newVal);
-
-    flapTop.style.visibility = 'visible';
-    flapBot.style.visibility = 'hidden';
-
-    flapTop.classList.remove('flipping');
-    void flapTop.offsetWidth;
-    flapTop.classList.add('flipping');
-
-    // Reveal flap-bot at halfway point
-    setTimeout(() => {
-      flapBot.style.visibility = 'visible';
-    }, 200);
-
-    flapTop.addEventListener('animationend', () => {
+    flapTop.style.visibility='visible';
+    flapBot.style.visibility='hidden';
+    flapTop.classList.remove('flipping'); void flapTop.offsetWidth; flapTop.classList.add('flipping');
+    setTimeout(()=>{
+      setText(staticTop,newVal);
+      setText(staticBot,newVal);
+      flapBot.style.visibility='visible';
+      flapBot.animate([{transform:'rotateX(90deg)'},{transform:'rotateX(0deg)'}],{duration:200,easing:'cubic-bezier(.4,0,.2,1)'});
+    },200);
+    flapTop.addEventListener('animationend',()=>{
       flapTop.classList.remove('flipping');
-      flapTop.style.visibility = 'hidden';
-      flapBot.style.visibility = 'hidden';
-    }, { once: true });
+      flapTop.style.visibility='hidden';
+      flapBot.style.visibility='hidden';
+    },{once:true});
   }
 
   function setTwoDigit(cards, value, oldValue) {
