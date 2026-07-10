@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flip Clock</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=Barlow:wght@500&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -13,11 +13,7 @@
     --bg: #C0504A;
     --card-bg: #1a1a1a;
     --digit-color: #ffffff;
-  }
-
-  @font-face {
-    font-family: 'FuturaFallback';
-    src: local('Futura'), local('Futura PT Bold'), local('Century Gothic');
+    --s: min(17vw, 17vh, 74px);
   }
 
   body {
@@ -32,7 +28,6 @@
     position: relative;
   }
 
-  /* Halftone dot overlay */
   body::before {
     content: '';
     position: fixed;
@@ -42,11 +37,6 @@
     pointer-events: none;
     z-index: 0;
   }
-
-  /* ── Scale everything off a single custom property ── */
-  /* Base design = 74px card width. We derive a scale factor from vmin.   */
-  /* All formerly-fixed sizes are expressed as calc(N / 74 * var(--s)).   */
-  :root { --s: min(17vw, 17vh, 74px); }   /* card width, clamps at 74px  */
 
   .clock-wrapper {
     position: relative;
@@ -58,10 +48,10 @@
   }
 
   .clock-title {
-    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
-    font-weight: 700;
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
     font-size: calc(var(--s) * 0.15);
-    letter-spacing: calc(var(--s) * 0.12);
+    letter-spacing: calc(var(--s) * 0.14);
     color: rgba(0,0,0,0.3);
     text-transform: uppercase;
   }
@@ -80,118 +70,105 @@
   }
 
   .unit-label {
-    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
-    font-weight: 700;
-    font-size: calc(var(--s) * 0.12);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 500;
+    font-size: calc(var(--s) * 0.13);
     letter-spacing: calc(var(--s) * 0.07);
     color: rgba(0,0,0,0.3);
     text-transform: uppercase;
   }
 
-  .flip-group {
-    display: flex;
-    gap: calc(var(--s) * 0.07);
-  }
+  .flip-group { display: flex; gap: calc(var(--s) * 0.07); }
 
+  /* ── Card ── */
   .flip-card {
     position: relative;
     width: var(--s);
-    height: calc(var(--s) * 1.378);   /* 102/74 */
-    perspective: calc(var(--s) * 6.76);
+    height: calc(var(--s) * 1.378);
     filter: drop-shadow(calc(var(--s)*0.068) calc(var(--s)*0.068) 0px rgba(0,0,0,0.4));
   }
 
-  .card-face {
+  /*
+   * Structure:
+   *  [static-top]  — always visible, shows current value, top half
+   *  [static-bot]  — always visible, shows current value, bottom half
+   *  [flap-top]    — animated, positioned on top half, rotates down on change
+   *  [flap-bot]    — animated, positioned on bottom half, revealed when flap-top lands
+   *
+   * Each piece is a half-height div with overflow:hidden.
+   * Inside each is a .digit-box that is full card height, so the digit
+   * is always centered the same way across all four pieces.
+   */
+
+  .half {
     position: absolute;
+    left: 0;
     width: 100%;
+    height: 50%;
+    overflow: hidden;
     background: var(--card-bg);
+    border: calc(var(--s) * 0.04) solid #000;
+  }
+  .half.top {
+    top: 0;
+    border-radius: calc(var(--s)*0.135) calc(var(--s)*0.135) 0 0;
+    border-bottom: calc(var(--s)*0.027) solid #000;
+  }
+  .half.bot {
+    bottom: 0;
+    border-radius: 0 0 calc(var(--s)*0.135) calc(var(--s)*0.135);
+    border-top: none;
+  }
+
+  .digit-box {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 200%;  /* full card height */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
+    font-family: 'Barlow Condensed', sans-serif;
     font-weight: 700;
-    font-size: calc(var(--s) * 1.135);  /* 84/74 */
+    font-size: calc(var(--s) * 1.2);
+    line-height: 1;
     color: var(--digit-color);
-    border-radius: calc(var(--s) * 0.135);
-    overflow: hidden;
     user-select: none;
-    border: calc(var(--s) * 0.04) solid #000;
   }
+  /* top half: anchor digit-box to top so upper half of digit shows */
+  .half.top .digit-box { top: 0; }
+  /* bot half: anchor digit-box to bottom so lower half of digit shows */
+  .half.bot .digit-box { bottom: 0; }
 
-  .card-top {
-    height: calc(var(--s) * 0.689);   /* 51/74 */
-    top: 0;
-    align-items: flex-end;
-    border-bottom: calc(var(--s) * 0.027) solid #000;
-    border-radius: calc(var(--s) * 0.135) calc(var(--s) * 0.135) 0 0;
-  }
-  .card-top span { transform: translateY(calc(var(--s) * 0.689)); display: block; }
+  /* z-layering */
+  .static-top { z-index: 1; }
+  .static-bot { z-index: 1; }
+  .flap-top   { z-index: 3; visibility: hidden; }  /* hidden at rest, shown during animation */
+  .flap-bot   { z-index: 2; visibility: hidden; }  /* hidden at rest, shown during animation */
 
-  .card-bottom {
-    height: calc(var(--s) * 0.689);
-    bottom: 0;
-    align-items: flex-start;
-    border-radius: 0 0 calc(var(--s) * 0.135) calc(var(--s) * 0.135);
-  }
-  .card-bottom span { transform: translateY(calc(var(--s) * -0.689)); display: block; }
-
+  /* Hinge */
   .hinge {
     position: absolute;
-    top: 50%;
-    left: 0; right: 0;
+    top: 50%; left: 0; right: 0;
     height: calc(var(--s) * 0.04);
     background: #000;
     z-index: 10;
     transform: translateY(-50%);
   }
 
-  .flip-panel {
-    position: absolute;
-    width: 100%;
-    height: calc(var(--s) * 0.689);
-    transform-origin: bottom;
-    transform-style: preserve-3d;
-    z-index: 5;
+  /* Flap-top animation */
+  .flap-top {
+    transform-origin: bottom center;
   }
-
-  .flip-panel .front,
-  .flip-panel .back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: var(--card-bg);
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    font-family: 'FuturaFallback', 'Josefin Sans', sans-serif;
-    font-weight: 700;
-    font-size: calc(var(--s) * 1.135);
-    color: var(--digit-color);
-    border-radius: calc(var(--s) * 0.135) calc(var(--s) * 0.135) 0 0;
-    overflow: hidden;
-    backface-visibility: hidden;
-    border: calc(var(--s) * 0.04) solid #000;
-    border-bottom: none;
-  }
-  .flip-panel .front span { transform: translateY(calc(var(--s) * 0.689)); display: block; }
-
-  .flip-panel .back {
-    transform: rotateX(180deg);
-    border-radius: 0 0 calc(var(--s) * 0.135) calc(var(--s) * 0.135);
-    align-items: flex-start;
-    border: calc(var(--s) * 0.04) solid #000;
-    border-top: none;
-  }
-  .flip-panel .back span { transform: translateY(calc(var(--s) * -0.689)); display: block; }
-
-  .flip-panel.flipping {
-    animation: flipDown 0.38s cubic-bezier(.4,0,.6,1) forwards;
+  .flap-top.flipping {
+    animation: flipDown 0.4s cubic-bezier(.4,0,.6,1) forwards;
   }
   @keyframes flipDown {
     0%   { transform: rotateX(0deg); }
-    100% { transform: rotateX(-180deg); }
+    100% { transform: rotateX(-90deg); }
   }
 
+  /* Separator dots */
   .separator {
     display: flex;
     flex-direction: column;
@@ -214,7 +191,7 @@
     100% { opacity: 1; }
   }
 
-  /* Color picker pill */
+  /* Color picker */
   .color-picker {
     display: flex;
     gap: calc(var(--s) * 0.135);
@@ -227,7 +204,6 @@
     justify-content: center;
     max-width: 90vw;
   }
-
   .swatch {
     width: calc(var(--s) * 0.297);
     height: calc(var(--s) * 0.297);
@@ -248,7 +224,6 @@
 
 <div class="clock-wrapper">
   <div class="clock-title">TIME</div>
-
   <div class="clock">
     <div class="unit">
       <div class="flip-group" id="hours"></div>
@@ -260,22 +235,21 @@
       <div class="unit-label">Min</div>
     </div>
   </div>
-
   <div class="color-picker" id="color-picker"></div>
 </div>
 
 <script>
   const themes = [
-    { bg: '#C0504A', dark: false },  // Dusty Red
-    { bg: '#D4845A', dark: false },  // Muted Tangerine
-    { bg: '#C9A84C', dark: false },  // Dusty Yellow
-    { bg: '#5A9E72', dark: false },  // Sage Green
-    { bg: '#4A7EB5', dark: false },  // Muted Blue
-    { bg: '#8A6BAE', dark: false },  // Dusty Grape
-    { bg: '#C47A96', dark: false },  // Dusty Pink
-    { bg: '#8B6A52', dark: true  },  // Warm Brown
-    { bg: '#7A8490', dark: true  },  // Blue Grey
-    { bg: '#3A3A3C', dark: true  },  // Jet Black
+    { bg: '#C0504A', dark: false },
+    { bg: '#D4845A', dark: false },
+    { bg: '#C9A84C', dark: false },
+    { bg: '#5A9E72', dark: false },
+    { bg: '#4A7EB5', dark: false },
+    { bg: '#8A6BAE', dark: false },
+    { bg: '#C47A96', dark: false },
+    { bg: '#8B6A52', dark: true  },
+    { bg: '#7A8490', dark: true  },
+    { bg: '#3A3A3C', dark: true  },
   ];
 
   const picker = document.getElementById('color-picker');
@@ -292,29 +266,42 @@
     document.documentElement.style.setProperty('--bg', t.bg);
     document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
     el.classList.add('active');
-
     const textAlpha = t.dark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
     const dotColor  = t.dark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)';
     const pillBg    = t.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.15)';
     const pillBd    = t.dark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.18)';
-
     document.querySelectorAll('.clock-title, .unit-label').forEach(e => e.style.color = textAlpha);
     document.querySelectorAll('.dot').forEach(d => d.style.background = dotColor);
-    picker.style.background   = pillBg;
-    picker.style.borderColor  = pillBd;
+    picker.style.background  = pillBg;
+    picker.style.borderColor = pillBd;
+  }
+
+  function makeHalf(topOrBot, extraClass) {
+    const div = document.createElement('div');
+    div.className = `half ${topOrBot} ${extraClass}`;
+    const box = document.createElement('div');
+    box.className = 'digit-box';
+    box.innerHTML = '<span>0</span>';
+    div.appendChild(box);
+    return div;
   }
 
   function createFlipCard() {
     const card = document.createElement('div');
     card.className = 'flip-card';
-    card.innerHTML = `
-      <div class="card-face card-top"><span>0</span></div>
-      <div class="card-face card-bottom"><span>0</span></div>
-      <div class="hinge"></div>
-      <div class="flip-panel">
-        <div class="front"><span>0</span></div>
-        <div class="back"><span>0</span></div>
-      </div>`;
+
+    const staticTop = makeHalf('top', 'static-top');
+    const staticBot = makeHalf('bot', 'static-bot');
+    const flapTop   = makeHalf('top', 'flap-top');
+    const flapBot   = makeHalf('bot', 'flap-bot');
+    const hinge     = document.createElement('div');
+    hinge.className = 'hinge';
+
+    card.appendChild(staticTop);
+    card.appendChild(staticBot);
+    card.appendChild(flapBot);   // below flap-top
+    card.appendChild(flapTop);   // on top
+    card.appendChild(hinge);
     return card;
   }
 
@@ -329,33 +316,42 @@
   const minCards  = buildGroup('minutes');
   let prev = { h: -1, m: -1 };
 
+  function setText(half, val) {
+    half.querySelector('span').textContent = val;
+  }
+
   function setDigit(card, newVal, oldVal) {
-    const topFace = card.querySelector('.card-top span');
-    const botFace = card.querySelector('.card-bottom span');
-    const panel   = card.querySelector('.flip-panel');
-    const front   = panel.querySelector('.front span');
-    const back    = panel.querySelector('.back span');
+    const staticTop = card.querySelector('.static-top');
+    const staticBot = card.querySelector('.static-bot');
+    const flapTop   = card.querySelector('.flap-top');
+    const flapBot   = card.querySelector('.flap-bot');
 
-    if (newVal === oldVal) {
-      topFace.textContent = newVal;
-      botFace.textContent = newVal;
-      return;
-    }
+    // Always keep static layers up to date
+    setText(staticTop, newVal);
+    setText(staticBot, newVal);
 
-    front.textContent   = oldVal;
-    back.textContent    = newVal;
-    topFace.textContent = newVal;
-    botFace.textContent = oldVal;
+    if (newVal === oldVal) return;
 
-    panel.classList.remove('flipping');
-    void panel.offsetWidth;
-    panel.classList.add('flipping');
+    // flap-top: shows old value, rotates away revealing new static-top underneath
+    setText(flapTop, oldVal);
+    setText(flapBot, newVal);
 
-    panel.addEventListener('animationend', () => {
-      panel.classList.remove('flipping');
-      botFace.textContent = newVal;
-      front.textContent   = newVal;
-      back.textContent    = newVal;
+    flapTop.style.visibility = 'visible';
+    flapBot.style.visibility = 'hidden';
+
+    flapTop.classList.remove('flipping');
+    void flapTop.offsetWidth;
+    flapTop.classList.add('flipping');
+
+    // Reveal flap-bot at halfway point
+    setTimeout(() => {
+      flapBot.style.visibility = 'visible';
+    }, 200);
+
+    flapTop.addEventListener('animationend', () => {
+      flapTop.classList.remove('flipping');
+      flapTop.style.visibility = 'hidden';
+      flapBot.style.visibility = 'hidden';
     }, { once: true });
   }
 
